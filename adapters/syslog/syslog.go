@@ -10,6 +10,7 @@ import (
 	"os"
 	"text/template"
 	"time"
+	"strings"
 
 	"github.com/gliderlabs/logspout/router"
 )
@@ -57,6 +58,7 @@ func NewSyslogAdapter(route *router.Route) (router.LogAdapter, error) {
 	}
 
 	var tmplStr string
+	var tplFuncMap template.FuncMap
 	switch format {
 	case "rfc5424":
 		tmplStr = fmt.Sprintf("<%s>1 {{.Timestamp}} %s %s %s - %s %s\n",
@@ -67,7 +69,9 @@ func NewSyslogAdapter(route *router.Route) (router.LogAdapter, error) {
 	default:
 		return nil, errors.New("unsupported syslog format: " + format)
 	}
-	tmpl, err := template.New("syslog").Parse(tmplStr)
+	tplFuncMap =  make(template.FuncMap)
+	tplFuncMap["Split"] = strings.Split
+	tmpl, err := template.New("syslog").Funcs(tplFuncMap).Parse(tmplStr)
 	if err != nil {
 		return nil, err
 	}
